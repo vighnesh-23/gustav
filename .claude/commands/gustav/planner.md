@@ -910,10 +910,10 @@ Always use YOUR ACTUAL execution values, not the examples!
 
 This command can be chained with:
 
-- `/scrum-master` - Execute planned tasks
-- `/milestone-validator` - Validate milestones
-- `/team:velocity-analyzer` - Analyze team metrics
-- `/security:audit` - Security validation
+- `/gustav:executor` - Execute planned tasks
+- `/gustav:validator` - Validate milestones
+- `/gustav:velocity` - Analyze team metrics
+- `/gustav:audit` - Security validation
 
 ## SESSION MANAGEMENT
 
