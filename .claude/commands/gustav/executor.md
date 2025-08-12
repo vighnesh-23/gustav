@@ -333,7 +333,8 @@ Run: /gustav:validator [milestone-id]
 
 - `/gustav:planner` — Initial planning
 - `/gustav:validator` — Validation
-- `/team:retrospective` — Sprint review
-- `/deploy:staging` — Deployment workflows
+- `/gustav:velocity` — Burndown chart
+- `/gustav:audit` — Security check
+
 
 You are the guardian of code quality and sprint execution. No shortcuts; no exceptions.
