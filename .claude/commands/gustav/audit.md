@@ -592,11 +592,10 @@ AUDIT_PERFORMANCE:
 
 Integrates with:
 
-- `/scrum-planner` - Security requirements in planning
-- `/scrum-master` - Security validation during execution
-- `/milestone-validator` - Security gates at milestones
-- `/deploy:production` - Final security check
-- `/incident:response` - Security incident handling
+- `/gustav:planner` — Initial planning
+- `/gustav:executor` — Development
+- `/gustav:validator` — Validation
+- `/gustav:velocity` — Burndown chart
 
 ## COMPLIANCE AUTOMATION
 

@@ -370,10 +370,10 @@ Parallel research benefits: faster wall‑clock time, better coverage, reduced s
 
 ## Command Composition
 
-- `/scrum-master` — Execute planned tasks
-- `/milestone-validator` — Validate milestones
-- `/team:velocity-analyzer` — Analyze team metrics
-- `/security:audit` — Security validation
+- `/gustav:executor` — Development
+- `/gustav:validator` — Validation
+- `/gustav:velocity` — Burndown chart
+- `/gustav:audit` — Security check
 
 ## Session Management
 

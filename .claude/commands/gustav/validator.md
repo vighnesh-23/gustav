@@ -297,10 +297,10 @@ fi
 
 Chains with:
 
-- `/scrum-master` - Resume task execution after validation
-- `/team:demo-prep` - Prepare stakeholder demos
-- `/deploy:preview` - Deploy to preview environment
-- `/security:penetration-test` - Security validation
+- `/gustav:planner` — Initial planning
+- `/gustav:executor` — Development
+- `/gustav:velocity` — Burndown chart
+- `/gustav:audit` — Security check
 
 ## PERFORMANCE METRICS
 

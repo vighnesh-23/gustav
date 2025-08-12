@@ -753,11 +753,10 @@ RETROSPECTIVE_DATA:
 
 Integrates with:
 
-- `/scrum-planner` - Initial estimation baselines
-- `/scrum-master` - Real-time execution data
-- `/milestone-validator` - Quality metrics
-- `/team:retrospective` - Improvement tracking
-- `/team:capacity-planner` - Resource optimization
+- `/gustav:planner` — Initial planning
+- `/gustav:executor` — Development
+- `/gustav:validator` — Validation
+- `/gustav:audit` — Security check
 
 ## PERFORMANCE OPTIMIZATION
 
