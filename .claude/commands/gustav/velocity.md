@@ -8,6 +8,55 @@ You are **Velocity Analytics Engine** — a data-driven performance analyzer tha
 
 Parse the arguments provided in: $ARGUMENTS
 
+## JSON ACCESS (jq-first)
+
+Prefer `jq` when available; fallback to Python. Define once per session and reuse:
+
+```bash
+# vget FILE FILTER  -> prints value(s)
+# If jq is missing, supports dot paths with optional [index]
+vget() {
+  if command -v jq >/dev/null 2>&1; then
+    jq -r "$2" "$1" | cat
+  elif command -v python3 >/dev/null 2>&1; then
+    python3 -c 'import json,sys,re
+file,path=sys.argv[1],sys.argv[2]
+with open(file) as f: data=json.load(f)
+if path.startswith("."): path=path[1:]
+cur=data
+for token in [t for t in path.split(".") if t]:
+    m=re.match(r"([A-Za-z0-9_]+)(?:\[(\d+)\])?$", token)
+    if not m: cur=None; break
+    key,idx=m.groups()
+    cur=cur.get(key) if isinstance(cur,dict) else None
+    if cur is None: break
+    if idx is not None:
+        i=int(idx)
+        cur=cur[i] if isinstance(cur,list) and 0<=i<len(cur) else None
+        if cur is None: break
+print(json.dumps(cur) if isinstance(cur,(dict,list)) else ("" if cur is None else str(cur)))' "$1" "$2"
+  else
+    echo "jq and python3 not found" >&2; return 1
+  fi
+}
+
+# spark: stdin numbers → sparkline ▁▂▃▄▅▆▇█
+spark() {
+  if ! command -v python3 >/dev/null 2>&1; then echo ""; return; fi
+  python3 - <<'PY'
+import sys
+chars="▁▂▃▄▅▆▇█"
+vals=[float(x) for x in sys.stdin.read().split() if x.strip()]
+if not vals:
+    print("")
+    raise SystemExit
+mn,mx=min(vals),max(vals)
+rng = (mx-mn) or 1.0
+print("".join(chars[min(len(chars)-1, int(round((v-mn)/rng*(len(chars)-1))))] for v in vals))
+PY
+}
+```
+
 ═══════════════════════════════════════════════════════════════
 **IF** $ARGUMENTS contains "--compare" **THEN**
 ═══════════════════════════════════════════════════════════════
@@ -38,7 +87,12 @@ Example: `/gustav:velocity --compare SPRINT-001 SPRINT-002`
    | Quality Score | [ACTUAL]% | [ACTUAL]% | [DIFF]% |
    
    ### Velocity Trend Comparison
-   [Generate side-by-side burndown charts]
+   Side-by-side burndown sparklines (actual vs ideal):
+   
+   SPRINT-1  Actual: [SPARKLINE_1]  Ideal: [IDEAL_1]
+   SPRINT-2  Actual: [SPARKLINE_2]  Ideal: [IDEAL_2]
+   
+   Legend: ▁▂▃▄▅▆▇█ (low→high)
    
    ### Key Differences
    - [Analyze what improved or degraded between sprints]
@@ -138,10 +192,12 @@ Please install pandoc and try again.
 1. Run full velocity analysis
 2. Create temporary markdown file:
 
-   ```bash
-   # Create temp file
-   TEMP_FILE="/tmp/velocity_report_$(date +%Y%m%d_%H%M%S).md"
-   ```
+       ```bash
+    # Create report file (no /tmp usage)
+    OUT_DIR=".tasks/velocity"
+    mkdir -p "$OUT_DIR"
+    TEMP_FILE="$OUT_DIR/velocity_report_$(date +%Y%m%d_%H%M%S).md"
+    ```
 
 3. Write complete report to temp file with all:
    - Velocity metrics
@@ -152,22 +208,21 @@ Please install pandoc and try again.
 
 4. **Convert to PDF:**
 
-   ```bash
-   # Generate PDF with pandoc
-   PDF_FILE="/tmp/velocity_report_$(date +%Y%m%d_%H%M%S).pdf"
-   pandoc "$TEMP_FILE" \
-     --pdf-engine=xelatex \
-     -V geometry:margin=1in \
-     -V colorlinks=true \
-     -V linkcolor=blue \
-     -V urlcolor=blue \
-     -o "$PDF_FILE"
-   
-   # Remove temp markdown
-   rm "$TEMP_FILE"
-   
-   echo "✅ PDF Report generated: $PDF_FILE"
-   ```
+       ```bash
+    # Generate PDF with pandoc (no /tmp usage)
+    OUT_DIR=".tasks/velocity"
+    mkdir -p "$OUT_DIR"
+    PDF_FILE="$OUT_DIR/velocity_report_$(date +%Y%m%d_%H%M%S).pdf"
+    pandoc "$TEMP_FILE" \
+      --pdf-engine=xelatex \
+      -V geometry:margin=1in \
+      -V colorlinks=true \
+      -V linkcolor=blue \
+      -V urlcolor=blue \
+      -o "$PDF_FILE"
+    
+    echo "✅ PDF Report generated: $PDF_FILE"
+    ```
 
 5. **Provide Result:**
 
@@ -310,15 +365,15 @@ PARALLEL_DATA_COLLECTION:
 ```yaml
 VELOCITY_COMPUTATION:
   Sprint_Velocity:
-    formula: completed_story_points / sprint_duration
-    normalization: account_for_holidays_and_leaves
+    formula: completed_story_points / sprint_duration_days
+    normalization: adjust_for_holidays_and_leaves
   
   Rolling_Average:
     window: last_3_sprints
-    weight: [0.5, 0.3, 0.2]  # Recent sprints weighted higher
+    weight: [0.5, 0.3, 0.2]  # recent sprints weighted higher
   
   Milestone_Velocity:
-    formula: milestones_completed / time_elapsed
+    formula: milestones_completed / time_elapsed_days
     quality_factor: validation_pass_rate
 ```
 
@@ -395,16 +450,16 @@ BOTTLENECK_DETECTION:
 
 #### Velocity Dashboard
 
-**CRITICAL:** Use ACTUAL data from JSON files. Replace ALL placeholders with real values!
+CRITICAL: Use ACTUAL data from JSON files. Replace ALL placeholders with real values.
 
 ```markdown
 ## Team Velocity Analysis Report
 
 ### Sprint Overview
-**Current Sprint:** [ACTUAL sprint_id from progress_tracker.json]
-**Sprint Status:** [ACTUAL status from progress_tracker.json]
-**Sprint Goal:** [Derive from milestone descriptions in task_graph.json]
-**Progress:** Day [CALCULATE from created_date] of [ESTIMATED sprint duration]
+- Sprint: [ACTUAL sprint_id]
+- Status: [ACTUAL status]
+- Goal: [From milestone descriptions]
+- Progress: Day [CALCULATED] of [ESTIMATED duration]
 
 ### 📈 Velocity Metrics
 | Metric | Current | Previous | Trend |
@@ -414,25 +469,36 @@ BOTTLENECK_DETECTION:
 | Tasks Complete | [tasks_completed]/[total_tasks] | - | [CALCULATE %] |
 | Milestones | [milestones_completed]/[total_milestones] | - | [CALCULATE %] |
 
-### 📊 Burndown Chart
-[BUILD CHART FROM ACTUAL DATA:]
-- X-axis: Actual sprint days
-- Y-axis: Actual remaining tasks/points
-- Plot actual progress line from real data
-- Plot ideal line based on total work / sprint days
-- DO NOT use example values like 50, 45, 40, etc.
+### 📊 Burndown Chart (Fancy, data-driven)
+- Build from actual JSON data; no placeholders
+- X-axis: day index from sprint start; Y-axis: remaining tasks/points
+- Plot actual vs ideal; annotate significant events (validation, rollbacks)
 
-Example format (with YOUR actual data):
+#### ASCII Grid (visual impact)
+```
+Remaining
+[Max]  █ ▇ ▆ ▅ ▅ ▄ ▃ ▂ ▁
+       │ ╲          
+       │  ╲   ● validation (M2)
+       │   ╲      ↘ rollback
+       │    ╲        
+       │     ╲         
+[Min]  └─────┴─────┴─────┴───── Days
+       D1    D5    D10   D15
 ```
 
-Tasks Remaining
-[TOTAL] |●
-        | [Plot actual progress]
-        | [Based on tasks_completed]
-0       |__________________________|
-        [Actual sprint timeline]
+#### Sparklines
+- Actual: ▇▆▅▄▃▂▁
+- Ideal:  █▇▆▅▄▃▁
 
+#### Data extraction (jq-first)
+```bash
+# Example: compute remaining per day if progress history exists
+vget .tasks/progress_tracker.json '.history.remaining[]'  # expects array
+# Or compute from totals if only daily completions exist
+# vget .tasks/progress_tracker.json '.history.completed[]'
 ```
+
 
 ### 🎯 Predictions
 **Completion Confidence:** [CALCULATE from actual velocity]
@@ -465,11 +531,15 @@ Tasks Remaining
 - Mark current sprint appropriately
 - DO NOT use fake values like 60, 55, 50, etc.
 
+#### Trend Sparklines
+- Velocity: [▁▂▃▄▅▆▇█] (low→high)
+- QAV:      [▁▂▃▄▅▆▇█]
+
 ### Team Capacity
-- **Utilization:** 92% (slightly high)
-- **Focus Factor:** 0.75 (good)
-- **Context Switching:** Low
-- **Collaboration:** High (0.83)
+- **Utilization:** [ACTUAL]
+- **Focus Factor:** [ACTUAL]
+- **Context Switching:** [ACTUAL]
+- **Collaboration:** [ACTUAL]
 ```
 
 #### Predictive Analytics Report

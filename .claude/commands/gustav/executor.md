@@ -21,23 +21,21 @@ jget() {
   if command -v jq >/dev/null 2>&1; then
     jq -r "$2" "$1" | cat
   elif command -v python3 >/dev/null 2>&1; then
-    python3 - "$1" "$2" <<'PY'
-import json,sys,re
-file, path = sys.argv[1], sys.argv[2]
-data = json.load(open(file))
-cur = data
-for token in filter(None, path.split('.')):
-    m = re.match(r'([A-Za-z0-9_]+)(\[(\d+)\])?$', token)
-    if not m: cur = None; break
-    key, _, idx = m.groups()
-    cur = cur.get(key) if isinstance(cur, dict) else None
+    python3 -c 'import json,sys,re
+file,path=sys.argv[1],sys.argv[2]
+with open(file) as f: data=json.load(f)
+cur=data
+for token in [t for t in path.split(".") if t]:
+    m=re.match(r"([A-Za-z0-9_]+)(?:\[(\d+)\])?$", token)
+    if not m: cur=None; break
+    key,idx=m.groups()
+    cur=cur.get(key) if isinstance(cur,dict) else None
     if cur is None: break
     if idx is not None:
-        i = int(idx)
-        cur = cur[i] if isinstance(cur, list) and 0 <= i < len(cur) else None
+        i=int(idx)
+        cur=cur[i] if isinstance(cur,list) and 0<=i<len(cur) else None
         if cur is None: break
-print(json.dumps(cur) if isinstance(cur,(dict,list)) else ("" if cur is None else str(cur)))
-PY
+print(json.dumps(cur) if isinstance(cur,(dict,list)) else ("" if cur is None else str(cur)))' "$1" "$2"
   else
     echo "jq and python3 not found" >&2; return 1
   fi
