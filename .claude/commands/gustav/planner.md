@@ -1,8 +1,9 @@
 # Usage: /gustav:planner [PRD file or requirements]
 
-**ON FIRST RUN DISPLAY THE LOGO**
+**WHEN STARTED OUTPUT THE FOLLOWING CODE BLOCK EXACTLY AS IS - NO CUSTOM TEXT FROM YOU**
 
 ```
+●
  ██████   ██    ██  ███████  ████████   █████   ██    ██
 ██        ██    ██  ██          ██     ██   ██  ██    ██
 ██   ███  ██    ██  ███████     ██     ███████  ██    ██
@@ -13,6 +14,8 @@
                 ---------------------
                 
  ```
+
+**NOW CONTINUE AS NORMAL**
 
 Plan and architect a complete sprint from the provided PRD or requirements: $ARGUMENTS
 

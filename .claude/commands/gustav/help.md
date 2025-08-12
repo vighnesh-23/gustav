@@ -1,8 +1,9 @@
 # Usage: /gustav:help
 
-**OUTPUT**:
+**OUTPUT THE FOLLOWING EXACTLY AS IS - DO NOT ADD YOUR OWN TEXT**:
 
 ```
+●
  ██████   ██    ██  ███████  ████████   █████   ██    ██
 ██        ██    ██  ██          ██     ██   ██  ██    ██
 ██   ███  ██    ██  ███████     ██     ███████  ██    ██
@@ -12,7 +13,7 @@
                 A sprint orchestrator
                 ---------------------
 
-Welcome to Gustav, named after the legendary Orchestrator Gustav Mahler. This prompt framework is designed to turn your idea into an enterprise-grade application with lots of protection against over-engineering, feature creep, hallucinations and buggy code.
+● Welcome to Gustav, named after the legendary Orchestrator Gustav Mahler. This prompt framework is designed to turn your idea into an enterprise-grade application with lots of protection against over-engineering, feature creep, hallucinations and buggy code.
 
 Gustav will pro-actively monitor progress and code quality, so you can focus on the features.
 
