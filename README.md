@@ -1,11 +1,11 @@
-         ██████   ██    ██  ███████  ████████   █████   ██    ██
-        ██        ██    ██  ██          ██     ██   ██  ██    ██
-        ██   ███  ██    ██  ███████     ██     ███████  ██    ██
-        ██    ██  ██    ██       ██     ██     ██   ██   ██  ██ 
-         ██████    ██████   ███████     ██     ██   ██    ████
+                   ██████   ██    ██  ███████  ████████   █████   ██    ██
+                  ██        ██    ██  ██          ██     ██   ██  ██    ██
+                  ██   ███  ██    ██  ███████     ██     ███████  ██    ██
+                  ██    ██  ██    ██       ██     ██     ██   ██   ██  ██ 
+                   ██████    ██████   ███████     ██     ██   ██    ████
 
-                 A sprint orchestrator for Claude Code
-                        ---------------------
+                          A sprint orchestrator for Claude Code
+                                  ---------------------
 
 Welcome to Gustav, named after the legendary Orchestrator Gustav Mahler. This prompt framework is designed to turn your idea into an enterprise-grade application with lots of protection against over-engineering, feature creep, hallucinations and buggy code.
 
