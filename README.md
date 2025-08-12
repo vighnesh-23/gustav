@@ -82,3 +82,5 @@ This tool will check your application against a number of security compliance fr
 And there you have it. This framework is in active development by me, Dimitri Tholen. It's a constantly evolving beast. I keep refining, testing,  evaluating, until I have created the ultimate autonomous AI coding team inside Claude Code.
 
 Peace.
+
+[LinkedIn](https://www.linkedin.com/in/dimitri-tholen-436825231)
