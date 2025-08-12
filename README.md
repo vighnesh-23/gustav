@@ -35,7 +35,18 @@ Now, most other frameworks are like a big black box. They keep developing hours 
 /gustav:validator
 ```
 
+![milestone](images/milestone.png)
+
 The validator will run tests, do code quality checks, checks endpoints of APIs, visits websites to check error messages. 
+
+Gustav also includes a burndown chart.
+
+```
+/gustav:velocity
+```
+
+![velocity](images/burndown.png)
+
 
 And finally we have the security scanner:
 

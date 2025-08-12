@@ -1,4 +1,4 @@
-# Usage: /gustav:velocity-analyzer [sprint-id optional]
+# Usage: /gustav:velocity [sprint-id optional]
 
 Analyze team velocity, performance metrics, and sprint predictability: $ARGUMENTS
 
