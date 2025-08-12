@@ -23,7 +23,7 @@ Just run:
 /gustav:planner <PRD PATH>
 ```
 
-Gustav will not do a lot of research so your application will be developed using the latest technologies in the best framework(s) for your particular goal. It will also decide which 7 features are going to be in the MVP version. Don't worry, Gustav will not remove any features. Any feature that doesn't make the cut for the MVP will be safely stored in the ./tasks/deferred.json file to be picked up later.
+Gustav will do a lot of research so your application will be developed using the latest technologies in the best framework(s) for your particular goal. It will also decide which 7 features are going to be in the MVP version. Don't worry, Gustav will not remove any features. Any feature that doesn't make the cut for the MVP will be safely stored in the ./tasks/deferred.json file to be picked up later.
 
 ![milestone](images/start.png)
 
