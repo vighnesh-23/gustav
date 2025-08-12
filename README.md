@@ -11,6 +11,8 @@ Welcome to Gustav, named after the legendary Orchestrator Gustav Mahler. This pr
 
 Gustav will pro-actively monitor progress and code quality, so you can focus on the features.
 
+**Disclaimer:** This project is in beta. If you encounter any issues, please let me know!
+
 ## The Sprint Planner
 
 To start out you need a Product Requirements Document (PRD) detailing your application idea. You can place the document anywhere you like, as long as it is in the same project folder or one of its sub-folders.
