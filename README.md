@@ -11,6 +11,8 @@ Welcome to Gustav, named after the legendary Orchestrator Gustav Mahler. This pr
 
 Gustav will pro-actively monitor progress and code quality, so you can focus on the features.
 
+## The Sprint Planner
+
 To start out you need a Product Requirements Document (PRD) detailing your application idea. You can place the document anywhere you like, as long as it is in the same project folder or one of its sub-folders.
 
 Just run: 
@@ -21,6 +23,13 @@ Just run:
 
 Gustav will not do a lot of research so your application will be developed using the latest technologies in the best framework(s) for your particular goal. It will also decide which 7 features are going to be in the MVP version. Don't worry, Gustav will not remove any features. Any feature that doesn't make the cut for the MVP will be safely stored in the ./tasks/deferred.json file to be picked up later.
 
+![milestone](images/start.png)
+
+![milestone](images/search.png)
+*Parallel research agents*
+
+## The programmer
+
 Once the planner has created all the necessary files, all you need to do is run:
 
 ```
@@ -28,6 +37,8 @@ Once the planner has created all the necessary files, all you need to do is run:
 ```
 
 Sit back and relax. Gustav will do all the heavy lifting. Your application will be built on solid best practices, like Test Driven Development (TDD), code quality tools and more. 
+
+## The QA person
 
 Now, most other frameworks are like a big black box. They keep developing hours on end and you really have no idea what is going on. Not Gustav. I have designed this framework with the human-in-the-loop as focal point. Gustav will not develop more than 3-4 tasks per milestone. Each milestone is a point in the development journey to start up the application and have a look. In fact, Gustav refuses to continue until you run the milestone validator:
 
@@ -39,6 +50,8 @@ Now, most other frameworks are like a big black box. They keep developing hours 
 
 The validator will run tests, do code quality checks, checks endpoints of APIs, visits websites to check error messages. 
 
+## The Project Manager
+
 Gustav also includes a burndown chart.
 
 ```
@@ -47,6 +60,8 @@ Gustav also includes a burndown chart.
 
 ![velocity](images/burndown.png)
 
+
+## That Security Dude
 
 And finally we have the security scanner:
 
