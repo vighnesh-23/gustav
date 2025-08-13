@@ -26,7 +26,7 @@ class UpdateSummary:
     total_tasks_after: int
 
 class JsonUpdater:
-    def __init__(self, tasks_dir: str = None):
+    def __init__(self, tasks_dir: Optional[str] = None):
         if tasks_dir is None:
             project_root = find_project_root()
             tasks_dir = os.path.join(project_root, ".tasks")
