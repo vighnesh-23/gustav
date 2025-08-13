@@ -309,9 +309,24 @@ ANALYSIS_EFFICIENCY:
 
 ## WORKFLOW WITH PARALLEL PROCESSING
 
-### Phase 1: Data Collection (PARALLEL)
+### Phase 1: Data Collection (FAST CLI)
 
-**CRITICAL:** Launch all data collection agents simultaneously for maximum efficiency
+**CRITICAL:** Use the high-speed Python CLI for data gathering instead of slow parallel processing
+
+**PREFERRED METHOD:** Use velocity_cli.py for instant data collection:
+
+```bash
+# Fast data collection and analysis (2-3 seconds)
+python3 .claude/commands/gustav/velocity_cli.py --json --quiet > /tmp/velocity_analysis.json
+
+# Extract specific metrics
+METRICS=$(python3 .claude/commands/gustav/velocity_cli.py --json --quiet)
+SPRINT_ID=$(echo "$METRICS" | jq -r '.metrics.sprint_id')
+VELOCITY=$(echo "$METRICS" | jq -r '.metrics.velocity_tasks_per_day')
+COMPLETION=$(echo "$METRICS" | jq -r '.metrics.task_completion_rate')
+```
+
+**FALLBACK METHOD:** Only if CLI fails, use parallel processing:
 
 ```yaml
 PARALLEL_DATA_COLLECTION:
@@ -324,7 +339,7 @@ PARALLEL_DATA_COLLECTION:
     - SA-6-VALIDATION: Process validation history
 ```
 
-**Implementation:** Create ALL Task tool invocations in ONE message block:
+**CLI Implementation:** Execute the CLI first, then format results:
 
 ```markdown
 ## Data Collection Agents (Parallel Execution)
@@ -678,10 +693,31 @@ EXPORT_OPTIONS:
 
 ## COMMAND PARAMETERS
 
-### Usage Examples
+### CLI Usage Examples
+
+**Direct CLI usage (fastest):**
 
 ```bash
-# Analyze current sprint
+# Quick analysis report
+python3 .claude/commands/gustav/velocity_cli.py
+
+# JSON output for scripting
+python3 .claude/commands/gustav/velocity_cli.py --json
+
+# Quiet mode (no progress messages)
+python3 .claude/commands/gustav/velocity_cli.py --quiet
+
+# Specific sprint analysis
+python3 .claude/commands/gustav/velocity_cli.py SPRINT-002
+
+# Custom tasks directory
+python3 .claude/commands/gustav/velocity_cli.py --tasks-dir /path/to/.tasks
+```
+
+### Gustav Command Usage
+
+```bash
+# Analyze current sprint (uses CLI internally)
 /gustav:velocity
 
 # Analyze specific sprint
