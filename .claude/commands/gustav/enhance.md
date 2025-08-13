@@ -21,7 +21,7 @@ You are Gustav Feature Enhancer — a smart post-planning assistant that researc
 
 ## Prerequisites Validation
 
-Before starting, verify sprint plan exists:
+Before starting, verify sprint plan exists and utilities are available:
 
 ```bash
 # Find project root and check required files exist
@@ -32,6 +32,23 @@ done
 
 if [[ ! -f "$PROJECT_ROOT/.tasks/task_graph.json" ]]; then
     echo "❌ No existing sprint plan found. Run /gustav:planner first."
+    exit 1
+fi
+
+# Find Gustav command directory for utility scripts
+GUSTAV_DIR=""
+if [[ -d "$PROJECT_ROOT/.claude/commands/gustav" ]]; then
+    GUSTAV_DIR="$PROJECT_ROOT/.claude/commands/gustav"
+elif [[ -d ~/.claude/commands/gustav ]]; then
+    GUSTAV_DIR=~/.claude/commands/gustav
+else
+    echo "❌ Gustav command utilities not found. Check .claude/commands/gustav installation."
+    exit 1
+fi
+
+# Verify utility scripts exist
+if [[ ! -f "$GUSTAV_DIR/utils/json_updater.py" ]] || [[ ! -f "$GUSTAV_DIR/utils/dependency_analyzer.py" ]]; then
+    echo "❌ Missing Gustav utility scripts. Run /gustav:planner to initialize."
     exit 1
 fi
 
@@ -56,10 +73,18 @@ fi
 2. **Existing Context Analysis**
 
    ```bash
-   # Load current project context
-   CURRENT_STACK=$(jq -r '.stack' "$PROJECT_ROOT/.tasks/techstack_research.json")
-   DEFERRED_FEATURES=$(jq -r '.deferred_features[].name' "$PROJECT_ROOT/.tasks/deferred.json")
-   CURRENT_MILESTONE=$(jq -r '.current_milestone.id' "$PROJECT_ROOT/.tasks/progress_tracker.json")
+   # Load current project context using Gustav CLI wrapper
+   echo "📋 Loading current sprint context..."
+   cd "$GUSTAV_DIR"
+   
+   # Get comprehensive project state
+   PROJECT_STATE=$(python3 utils/enhance_cli.py get-project-state "$PROJECT_ROOT/.tasks")
+   CURRENT_MILESTONE=$(echo "$PROJECT_STATE" | jq -r '.current_milestone.id')
+   MILESTONE_CAPACITY=$(echo "$PROJECT_STATE" | jq -r '.current_milestone.remaining_capacity')
+   DEFERRED_COUNT=$(echo "$PROJECT_STATE" | jq -r '.deferred_features | length')
+   
+   echo "Current milestone: $CURRENT_MILESTONE (capacity: $MILESTONE_CAPACITY)"
+   echo "Deferred features: $DEFERRED_COUNT"
    ```
 
 3. **Research Requirements**
@@ -162,59 +187,117 @@ Follow same task structure as planner:
 
 ### Phase 4 — Atomic JSON Updates
 
-Update all files consistently:
+**Use Gustav CLI wrapper for safe, atomic updates:**
 
-1. **task_graph.json**
-   - Insert new tasks at calculated positions
-   - Update milestone task lists
-   - Adjust validation task dependencies
-   - Update scope_enforcement totals
+```bash
+# Phase 4A: Create comprehensive backup
+echo "📦 Creating backup before enhancement..."
+cd "$GUSTAV_DIR"
+BACKUP_DIR=$(python3 utils/enhance_cli.py create-backup "$PROJECT_ROOT/.tasks")
 
-2. **progress_tracker.json**
-   - Update total_tasks count
-   - Adjust milestone task counts
-   - Update next_action if needed
-   - Add enhancement tracking
+if [[ $? -ne 0 ]]; then
+    echo "❌ Backup creation failed. Aborting enhancement."
+    exit 1
+fi
 
-3. **techstack_research.json** (if needed)
-   - Add new technology research
-   - Update verification timestamps
-   - Maintain source consistency
+# Phase 4B: Run feature analysis 
+echo "🔍 Analyzing feature dependencies..."
+FEATURE_ANALYSIS=$(python3 utils/enhance_cli.py analyze-feature "${feature_description}" "$PROJECT_ROOT/.tasks")
+if [[ $? -ne 0 ]]; then
+    echo "❌ Feature analysis failed. Aborting enhancement."
+    exit 1
+fi
 
-4. **guardrail_config.json**
-   - Extend scope_creep_detection if needed
-   - Add new forbidden patterns
-   - Update protection hooks
+echo "Feature analysis completed:"
+echo "$FEATURE_ANALYSIS" | jq '.complexity, .estimated_tasks, .new_technologies'
 
-5. **deferred.json**
-   - Remove feature if reactivating deferred item
-   - Update dependency lists
-   - Adjust sprint estimates
+# Phase 4C: Show impact preview before applying
+echo "📊 Enhancement Impact Preview:"
+python3 utils/enhance_cli.py show-impact "${feature_description}" "$PROJECT_ROOT/.tasks"
 
-6. **prd_digest.json**
-   - Add enhancement features to mvp_features (if space)
-   - Update protection metrics
-   - Track enhancement history
+if [[ $? -ne 0 ]]; then
+    echo "❌ Could not generate impact preview. Feature may be too complex."
+    exit 1
+fi
+
+# Phase 4D: Apply enhancement atomically
+echo ""
+read -p "Continue with enhancement? (y/N): " -n 1 -r
+echo ""
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Enhancement cancelled by user."
+    exit 0
+fi
+
+echo "🚀 Applying enhancement (atomic with automatic rollback on failure)..."
+ENHANCEMENT_RESULT=$(python3 utils/enhance_cli.py apply-enhancement \
+    "${feature_description}" \
+    "$PROJECT_ROOT/.tasks" \
+    --backup-dir "$BACKUP_DIR")
+
+if [[ $? -ne 0 ]]; then
+    echo "❌ Enhancement failed. Files automatically restored from backup."
+    exit 1
+fi
+
+echo "$ENHANCEMENT_RESULT"
+
+# Enhancement is now complete! 
+# All JSON files have been updated atomically by the Gustav utilities.
+# No manual file editing is needed or should be attempted.
+```
+
+**Files are automatically updated by enhance_cli.py:**
+- ✅ **task_graph.json** - New tasks, milestone updates, scope tracking (AUTOMATIC)
+- ✅ **progress_tracker.json** - Task counts, milestone progress, enhancement log (AUTOMATIC)
+- ✅ **techstack_research.json** - New technology placeholders if needed (AUTOMATIC)
+- ✅ **guardrail_config.json** - Protection rules for complex enhancements (AUTOMATIC)
+- ✅ **deferred.json** - Remove reactivated features, update dependencies (AUTOMATIC)
+- ✅ **prd_digest.json** - Enhancement tracking, protection metrics (AUTOMATIC)
+
+**⚠️ IMPORTANT: Do not manually edit JSON files after enhancement - all updates are handled automatically by the utility.**
+
+## Enhancement Completion
+
+Once the enhancement script completes successfully:
+
+1. **✅ All JSON files have been updated atomically**
+2. **✅ Backup created automatically** 
+3. **✅ Task added to appropriate milestone**
+4. **✅ Dependencies validated and satisfied**
+5. **✅ Enhancement tracking recorded**
+
+**🎯 ENHANCEMENT IS COMPLETE - NO FURTHER ACTION NEEDED**
+
+Next step: Run `/gustav:executor` to begin development
 
 ## Safety Mechanisms
 
 ### Rollback Protection
 
+**Automatic backups handled by Gustav CLI wrapper:**
+
 ```bash
-# Create backup before modifications
-BACKUP_DIR="$PROJECT_ROOT/.tasks/backup/$(date +%Y%m%d_%H%M%S)"
-mkdir -p "$BACKUP_DIR"
-cp "$PROJECT_ROOT/.tasks"/*.json "$BACKUP_DIR/"
-echo "Backup created: $BACKUP_DIR"
+# Backups are created automatically by enhance_cli.py
+# Manual restore if needed:
+echo "📦 Available backups:"
+ls -la "$PROJECT_ROOT/.tasks/backup/"
+
+# Note: Automatic rollback happens on failure
+# Manual restore not typically needed as enhance_cli.py handles it
+# But if required, backups are standard JSON files that can be copied back
 ```
 
 ### Validation Gates
 
-- Check JSON syntax after each update
-- Verify task ID uniqueness
-- Validate dependency references
-- Ensure milestone capacity limits
-- Confirm protection metrics consistency
+**Automated validation by Gustav utilities:**
+- ✅ JSON syntax validation after each update
+- ✅ Task ID uniqueness verification  
+- ✅ Dependency reference validation
+- ✅ Milestone capacity limits enforcement
+- ✅ Protection metrics consistency checks
+- ✅ Cross-file consistency validation
+- ✅ Automatic rollback on validation failure
 
 ### Impact Assessment
 
@@ -235,45 +318,52 @@ ENHANCEMENT_IMPACT:
 
    ```
    🔍 Analyzing: "{feature_description}"
-   📊 Checking against existing plan...
+   📋 Loading current sprint context...
+   Current milestone: M2 (capacity: 2)
+   Deferred features: 3
    🎯 Impact Assessment: [low/medium/high]
+   ✅ Compatible with existing techstack
    ```
 
 2. **Placement Options**
 
    ```
-   📍 Placement Options:
-   Option A: Insert in M2 (capacity: 2/5 tasks)
-   Option B: Create new M2.5 milestone  
-   Option C: Add to M3 (requires dependency on T-AUDIO-001)
+   📍 Optimal Placement Found:
+   Target: M2 "Core Features" (capacity: 2/5 tasks)
+   Dependencies: All satisfied
+   Estimated tasks: 2 
+   Complexity: Medium
    
-   Recommended: Option A - Insert in M2
-   Reason: Dependencies satisfied, good capacity
+   Alternative options:
+   - M3 "Advanced Features" (requires T-CORE-003 completion)
+   - New milestone M2.5 (if feature complexity increases)
    ```
 
-3. **Confirmation**
+3. **Impact Preview** (Automatic via utilities)
 
    ```
-   ✅ Enhancement Plan Ready
-   - Tasks to add: 2
-   - Target milestone: M2
-   - New research needed: None
-   - Estimated complexity: Medium
-   
-   Proceed? (y/n)
+   📊 Enhancement Impact Preview:
+   ├─ Tasks to add: 2
+   ├─ Target milestone: M2  
+   ├─ Files to update: 4
+   ├─ Backup location: .tasks/backup/20250813_143022
+   ├─ New dependencies: None
+   └─ Risk level: Low
    ```
 
-4. **Execution**
+4. **Execution** (Atomic via utilities)
 
    ```
-   🚀 Applying enhancement...
-   ✅ Tasks generated
-   ✅ Dependencies mapped  
-   ✅ JSON files updated
-   ✅ Backup created
+   📦 Creating backup before enhancement...
+   ✅ Backup created: .tasks/backup/20250813_143022
+   🔍 Analyzing feature dependencies...
+   📍 Finding optimal insertion point...
+   🚀 Applying enhancement (with automatic backups)...
+   ✅ JSON consistency validation passed
    
    🎉 Enhancement complete!
-   Next: Run /gustav:executor to continue
+   📁 Files updated: task_graph.json, progress_tracker.json
+   🎯 Next: Run /gustav:executor to continue development
    ```
 
 ## Example Usage
