@@ -10,51 +10,52 @@ You are Scrum Executor — a language‑agnostic task orchestrator with strict s
 - Batch related tool calls; prefer parallel reads/writes
 - Avoid interactive prompts; add `| cat` where a pager might appear
 
-## JSON Access (jq‑first)
+## Gustav CLI Tools
 
-Prefer `jq` for reading `.tasks/*.json`. If `jq` is missing, fall back to Python. Define this helper once per session:
+Use the executor_cli.py wrapper for all JSON navigation and status updates. This provides atomic updates with backup/restore capabilities and prevents manual JSON editing errors.
 
 ```bash
-# JSON get: jget FILE PATH
-# PATH supports dot + optional [index], e.g. tasks[0].id
-jget() {
-  if command -v jq >/dev/null 2>&1; then
-    jq -r "$2" "$1" | cat
-  elif command -v python3 >/dev/null 2>&1; then
-    python3 -c 'import json,sys,re
-file,path=sys.argv[1],sys.argv[2]
-with open(file) as f: data=json.load(f)
-cur=data
-for token in [t for t in path.split(".") if t]:
-    m=re.match(r"([A-Za-z0-9_]+)(?:\[(\d+)\])?$", token)
-    if not m: cur=None; break
-    key,idx=m.groups()
-    cur=cur.get(key) if isinstance(cur,dict) else None
-    if cur is None: break
-    if idx is not None:
-        i=int(idx)
-        cur=cur[i] if isinstance(cur,list) and 0<=i<len(cur) else None
-        if cur is None: break
-print(json.dumps(cur) if isinstance(cur,(dict,list)) else ("" if cur is None else str(cur)))' "$1" "$2"
-  else
-    echo "jq and python3 not found" >&2; return 1
-  fi
+# Find Gustav CLI tools (do this once per session)
+PROJECT_ROOT=$(pwd)
+while [[ "$PROJECT_ROOT" != "/" ]] && [[ ! -d "$PROJECT_ROOT/.tasks" ]] && [[ ! -d "$PROJECT_ROOT/.git" ]]; do
+    PROJECT_ROOT=$(dirname "$PROJECT_ROOT")
+done
+
+GUSTAV_DIR=""
+if [[ -d "$PROJECT_ROOT/.claude/commands/gustav" ]]; then
+    GUSTAV_DIR="$PROJECT_ROOT/.claude/commands/gustav"
+elif [[ -d ~/.claude/commands/gustav ]]; then
+    GUSTAV_DIR=~/.claude/commands/gustav
+fi
+
+# Executor CLI wrapper function
+executor_cli() {
+    cd "$GUSTAV_DIR" && python3 utils/executor_cli.py "$@"
 }
 ```
 
-Examples (use as needed):
+Common operations:
 
 ```bash
-# Current milestone id/name
-jget .tasks/progress_tracker.json '.current_milestone.id'
-jget .tasks/progress_tracker.json '.current_milestone.name'
+# Get current sprint status and validation requirements
+executor_cli get-current-status
 
-# All tasks in current milestone
-MID=$(jget .tasks/progress_tracker.json '.current_milestone.id')
-jget .tasks/task_graph.json ".milestones[] | select(.id==\"$MID\").tasks"
+# Find next eligible task (or get specific task)
+executor_cli get-next-task [task-id]
 
-# Version locks from a task object in memory (supply task JSON via a temp file)
-# jget /tmp/task.json '.documentation_context.version_locks'
+# Get comprehensive task details including scope boundaries
+executor_cli get-task-details <task-id>
+
+# Start/complete tasks with atomic status updates
+executor_cli start-task <task-id>
+executor_cli complete-task <task-id>
+
+# Validate dependencies and compliance
+executor_cli validate-dependencies <task-id>
+executor_cli check-scope-compliance <task-id>
+
+# Get milestone completion status
+executor_cli get-milestone-status <milestone-id>
 ```
 
 ## Core Responsibilities
@@ -69,188 +70,299 @@ jget .tasks/task_graph.json ".milestones[] | select(.id==\"$MID\").tasks"
 
 ### Phase 1: Task Status & Selection
 
-```yaml
-DETERMINE_NEXT_TASK:
-  1. Read .tasks/progress_tracker.json
-  2. If validation_pending or milestone complete without validation:
-     - Display: "⚠️ VALIDATION REQUIRED"
-     - Show: "Run: /gustav:validator [milestone-id]"
-     - BLOCK execution until validated
-  3. If task-id provided: use it; else pick next eligible from .tasks/task_graph.json
-     - Dependencies complete, prioritize current milestone
-  4. Load task details: scope_boundaries, documentation_context, prd_traceability,
-     max_file_changes, milestone_metadata
-```
-
-jq‑first guidance:
+**Use Gustav CLI for structured task management:**
 
 ```bash
-# Example checks (adjust filters to your schema)
-STATUS=$(jget .tasks/progress_tracker.json '.status') | cat
-VALIDATE=$(jget .tasks/progress_tracker.json '.current_milestone.validation_pending') | cat
-# Next task selection: prefer in‑memory filtering over shell where complex
+# Step 1: Check sprint status and validation requirements
+echo "🔍 Checking sprint status..."
+SPRINT_STATUS=$(executor_cli get-current-status)
+
+# Check if validation is required (blocks execution)
+VALIDATION_REQUIRED=$(echo "$SPRINT_STATUS" | jq -r '.validation_required')
+BLOCKED_REASON=$(echo "$SPRINT_STATUS" | jq -r '.blocked_reason // empty')
+
+if [[ "$VALIDATION_REQUIRED" == "true" ]]; then
+    echo "⚠️ VALIDATION REQUIRED"
+    echo "Reason: $BLOCKED_REASON"
+    echo "Run: /gustav:validator [milestone-id]"
+    echo "❌ No tasks will execute until validation completes."
+    exit 1
+fi
+
+# Step 2: Get next task (or specific task if provided)
+echo "📋 Finding next eligible task..."
+if [[ -n "$task_id" ]]; then
+    TASK_RESULT=$(executor_cli get-next-task "$task_id")
+else
+    TASK_RESULT=$(executor_cli get-next-task)
+fi
+
+# Check if task selection succeeded
+TASK_ERROR=$(echo "$TASK_RESULT" | jq -r '.error // empty')
+if [[ -n "$TASK_ERROR" ]]; then
+    echo "❌ $TASK_ERROR"
+    exit 1
+fi
+
+# Extract task information
+TASK_ID=$(echo "$TASK_RESULT" | jq -r '.task.id')
+TASK_TITLE=$(echo "$TASK_RESULT" | jq -r '.task.title')
+echo "✅ Selected task: $TASK_ID - $TASK_TITLE"
+
+# Step 3: Load comprehensive task details
+TASK_DETAILS=$(executor_cli get-task-details "$TASK_ID")
 ```
 
 ### Phase 2: Pre‑Task Validation
 
-A. Scope Boundary Check
+**Use Gustav CLI for structured validation:**
 
-```yaml
-VALIDATE_SCOPE:
-  - Extract must_implement and must_not_implement
-  - Display boundaries to lock scope
-  - Record baselines: file count, line counts (relevant dirs), test coverage
+```bash
+# Step 1: Validate task dependencies
+echo "🔗 Checking task dependencies..."
+DEPS_STATUS=$(executor_cli validate-dependencies "$TASK_ID")
+DEPS_SATISFIED=$(echo "$DEPS_STATUS" | jq -r '.satisfied')
+
+if [[ "$DEPS_SATISFIED" != "true" ]]; then
+    echo "❌ Task dependencies not satisfied"
+    echo "$DEPS_STATUS" | jq -r '.missing[]' | while read dep; do
+        echo "  Missing: $dep"
+    done
+    exit 1
+fi
+
+# Step 2: Check scope compliance and boundaries
+echo "📏 Validating scope boundaries..."
+SCOPE_CHECK=$(executor_cli check-scope-compliance "$TASK_ID")
+
+# Extract scope boundaries for display
+MUST_IMPLEMENT=$(echo "$SCOPE_CHECK" | jq -r '.must_implement[]?' 2>/dev/null | tr '\n' ',' | sed 's/,$//')
+MUST_NOT_IMPLEMENT=$(echo "$SCOPE_CHECK" | jq -r '.must_not_implement[]?' 2>/dev/null | tr '\n' ',' | sed 's/,$//')
+MAX_FILES=$(echo "$SCOPE_CHECK" | jq -r '.max_files // 10')
+
+echo "📋 Scope Boundaries:"
+[[ -n "$MUST_IMPLEMENT" ]] && echo "  ✅ Must implement: $MUST_IMPLEMENT"
+[[ -n "$MUST_NOT_IMPLEMENT" ]] && echo "  ❌ Must NOT implement: $MUST_NOT_IMPLEMENT"
+echo "  📁 Max files: $MAX_FILES"
+
+# Step 3: Validate tech stack compliance
+echo "🔧 Checking tech stack compliance..."
+TECH_COMPLIANCE=$(echo "$TASK_DETAILS" | jq -r '.tech_compliance')
+COMPLIANT=$(echo "$TECH_COMPLIANCE" | jq -r '.compliant')
+
+if [[ "$COMPLIANT" != "true" ]]; then
+    echo "❌ Task uses non-approved technologies:"
+    echo "$TECH_COMPLIANCE" | jq -r '.non_compliant_technologies[]' | while read tech; do
+        echo "  - $tech (not in approved stack)"
+    done
+    exit 1
+fi
+
+echo "✅ All pre-task validations passed"
 ```
 
-B. Tech Stack Enforcement
+### Phase 3: Task Execution
 
-```yaml
-VERIFY_TECH_STACK:
-  - Read approved stack from .tasks/techstack_research.json
-  - Read version_locks from task.documentation_context
-  - Ensure tools/packages exist locally; versions match exactly
-  - BLOCK non‑approved technology
+**Start task execution with atomic status update:**
+
+```bash
+# Step 1: Mark task as in-progress
+echo "🚀 Starting task execution..."
+START_RESULT=$(executor_cli start-task "$TASK_ID")
+
+# Check if task start succeeded
+START_ERROR=$(echo "$START_RESULT" | jq -r '.error // empty')
+if [[ -n "$START_ERROR" ]]; then
+    echo "❌ Failed to start task: $START_ERROR"
+    exit 1
+fi
+
+echo "✅ Task $TASK_ID marked as in-progress"
+
+# Step 2: Display task context and boundaries
+echo ""
+echo "📋 Task Context:"
+echo "Title: $(echo "$TASK_DETAILS" | jq -r '.task.title')"
+echo "Milestone: $(echo "$TASK_DETAILS" | jq -r '.milestone.name // "Unknown"')"
+echo "Dependencies: $(echo "$TASK_DETAILS" | jq -r '.dependencies.total_dependencies // 0')"
+
+# Step 3: Execute task following TDD methodology
+echo ""
+echo "🧪 TDD Execution Phase (Tests → Implement → Refactor)..."
+echo "Proceed with implementation following scope boundaries above."
+echo ""
 ```
 
-C. Documentation Currency
+### Phase 4: Task Completion
 
-```yaml
-CHECK_DOCUMENTATION:
-  - Verify URLs are accessible
-  - Docs < 6 months, else flag for verification
-  - Validate API methods against official docs only
+**Complete task with atomic status updates:**
+
+```bash
+# After successful implementation, testing, and quality gates:
+
+echo "✅ Task implementation complete, running final validations..."
+
+# Run quality gates (adapt to project)
+npm test -- --coverage | cat || echo "❌ Tests failed"
+npm run lint | cat || echo "❌ Linting failed" 
+npm run build | cat || echo "❌ Build failed"
+
+# Mark task as complete
+echo "🎯 Marking task as complete..."
+COMPLETE_RESULT=$(executor_cli complete-task "$TASK_ID")
+
+# Check completion status
+COMPLETE_ERROR=$(echo "$COMPLETE_RESULT" | jq -r '.error // empty')
+if [[ -n "$COMPLETE_ERROR" ]]; then
+    echo "❌ Failed to complete task: $COMPLETE_ERROR"
+    exit 1
+fi
+
+echo "✅ Task $TASK_ID marked as completed"
+
+# Check if milestone is now complete
+MILESTONE_COMPLETE=$(echo "$COMPLETE_RESULT" | jq -r '.milestone_complete // false')
+if [[ "$MILESTONE_COMPLETE" == "true" ]]; then
+    MILESTONE_ID=$(echo "$COMPLETE_RESULT" | jq -r '.milestone_id')
+    echo ""
+    echo "🎉 MILESTONE COMPLETE!"
+    echo "Milestone: $MILESTONE_ID"
+    echo "⚠️ Validation required before continuing"
+    echo "Run: /gustav:validator $MILESTONE_ID"
+fi
+
+# Task execution complete - no manual JSON editing needed!
+# All status updates handled atomically by Gustav CLI tools.
 ```
 
-### Phase 3: TDD Implementation
+## IMPORTANT: Task Execution Complete
 
-TDD Guard: block implementation without tests; keep tests green across steps.
+**⚠️ Once the task completion workflow above finishes:**
 
-1) Write Tests First (RED)
+1. **✅ All status updates are automatic** - No manual JSON editing required
+2. **✅ Milestone progress tracked** - Completion percentage calculated automatically  
+3. **✅ Backup created** - All changes backed up atomically
+4. **✅ Validation triggered** - Milestone validation prompted when needed
 
-```yaml
-CREATE_TESTS:
-  - Create test file(s) for the task
-  - Cover acceptance criteria, edges, and error scenarios
-  - Tests MUST fail initially
-```
+**🎯 TASK EXECUTION IS COMPLETE - NO FURTHER MANUAL ACTION NEEDED**
 
-2) Minimal Implementation (GREEN)
+Next step: If milestone complete, run `/gustav:validator <milestone-id>`
 
-```yaml
-IMPLEMENT_MINIMUM:
-  - Write just enough code to pass tests
-  - No extra features; no premature optimization
-  - Run tests after each change; all tests must pass
-```
+## TDD Implementation Guidelines  
 
-3) Refactor (REFACTOR)
+**Follow Test-Driven Development methodology during Phase 3 task execution:**
 
-```yaml
-IMPROVE_CODE:
-  - Remove duplication; improve naming; simplify logic; keep style consistent
-  - Constraint: tests remain green
-```
+### 1. Write Tests First (RED)
+- Create test file(s) for the task requirements
+- Cover acceptance criteria, edge cases, and error scenarios  
+- Tests MUST fail initially (RED state)
 
-### Phase 4: Continuous Monitoring
+### 2. Minimal Implementation (GREEN)
+- Write just enough code to pass tests
+- No extra features or premature optimization
+- Run tests after each change - all tests must pass (GREEN state)
 
-```yaml
-MONITOR_EXECUTION:
-  File Changes:
-    - Track modified files; enforce max_file_changes
-    - Prevent unauthorized files
-  Scope Creep:
-    - Detect forbidden keywords (TODO, FIXME, HACK)
-    - Block forbidden features/dependencies
-  Quality:
-    - Coverage, linting, type checks (if applicable), build status
-```
+### 3. Refactor (REFACTOR)
+- Remove duplication, improve naming, simplify logic
+- Maintain consistent code style with project conventions
+- Constraint: tests must remain green throughout refactoring
 
-### Phase 5: Quality Gates
+## Continuous Quality Monitoring
 
-Blocking checks (must pass)
+- **Scope boundaries** from task details (use scope_boundaries extracted earlier)
+- **File change limits** (max_files from scope compliance check)  
+- **Technology compliance** (approved stack only)
+- **Test coverage** and quality thresholds
+- **Build status** and lint checks
 
-```yaml
-BLOCKING_CHECKS:
-  Tests: 100% pass (unit + integration); no unjustified skips
-  Coverage: ≥ threshold from .tasks/guardrail_config.json
-  Static Analysis: zero lint/type errors; no critical/high vulns
-  Build: compiles/runs successfully; dependencies resolved
-```
+### Quality Gate Requirements
 
-Warning checks (should pass)
+**Blocking checks (must pass):**
+- ✅ All tests pass (100% success rate)
+- ✅ Test coverage meets threshold
+- ✅ Zero lint/type errors
+- ✅ Build compiles and runs successfully
+- ✅ No critical or high severity vulnerabilities
 
-```yaml
-WARNING_CHECKS:
-  - Complexity within limits; docs updated; performance acceptable; dependency audit clean
-```
-
-### Phase 6: Task Completion
-
-```yaml
-COMPLETE_TASK:
-  1. Update .tasks/progress_tracker.json (status, metrics, velocity, milestone progress)
-  2. Milestone behavior:
-     - If last non‑validation task done: display next‑step message and STOP
-     - Do NOT create/run validation; /gustav:validator owns validation
-  3. Completion report: id/title, tests written/passed, coverage, quality gates,
-     files modified, milestone progress
-  4. Identify next task: if milestone complete, show validator command; else pick next
-  5. Commit: atomic commit referencing task id + metrics; tag milestone completions
-```
+**Quality improvements (should address):**
+- Code complexity within reasonable limits
+- Documentation updated for new features
+- Performance meets requirements
+- Dependency audit clean
 
 ## Enforcement Protocols
 
-```yaml
-PREVENT_SCOPE_CREEP:
-  Before: display boundaries
-  During: monitor files/features
-  After: validate only approved changes
-  Action: REVERT unauthorized changes
+**Gustav CLI tools automatically enforce these guardrails:**
 
-ENFORCE_TECH_STACK:
-  Allowed: only technologies in techstack_research.json
-  Versions: match exactly; no beta/alpha/experimental
-  Action: BLOCK non‑compliance
+### Scope Protection
+- **Before**: Scope boundaries displayed from task details  
+- **During**: Monitor file changes against max_files limit
+- **After**: Validate only approved changes made
+- **Action**: Block task completion if scope violated
 
-ENFORCE_TDD:
-  Sequence: Tests → Implement → Refactor
-  Coverage: meet threshold; tests meaningful
-  Action: BLOCK implementation without tests
+### Tech Stack Enforcement  
+- **Allowed**: Only technologies in approved techstack_research.json
+- **Versions**: Match exactly - no beta/alpha/experimental versions
+- **Action**: Block task start if non-compliant technologies detected
 
-ENFORCE_QUALITY:
-  Linting/Testing/Coverage/Build must pass
-  Action: BLOCK completion on failure
-```
+### TDD Enforcement
+- **Sequence**: Tests → Implement → Refactor (enforced by methodology)
+- **Coverage**: Must meet threshold defined in guardrail_config.json  
+- **Action**: Block task completion without adequate tests
+
+### Quality Enforcement
+- **Requirements**: Linting, testing, coverage, build must all pass
+- **Action**: Block task completion on any quality gate failure
 
 ## Status Reporting
 
-```yaml
-REPORT_FORMAT:
-  Task:
-    - id, title, feature association, dependencies
-    - milestone status (e.g., "M2: 3/5 tasks complete")
-  Execution:
-    - start time, duration, tests written/passed, coverage
-  Quality:
-    - linting, type checking, build status
-  Changes:
-    - files modified, lines added/removed, dependencies added
-  Next:
-    - next eligible task, blocked tasks, sprint and milestone progress
+**Gustav CLI provides structured status reporting:**
+
+```bash
+# Get comprehensive task execution report
+executor_cli get-current-status | jq '{
+  sprint_status: .sprint_status,
+  milestone: .current_milestone.name,
+  progress: "\(.completed_tasks)/\(.total_tasks) tasks complete",
+  validation_required: .validation_required
+}'
+
+# Get detailed milestone status  
+executor_cli get-milestone-status "$MILESTONE_ID" | jq '{
+  milestone: .milestone_name,
+  progress: "\(.completed_tasks)/\(.total_tasks) tasks",
+  percentage: .completion_percentage,
+  pending_tasks: .pending_task_ids
+}'
 ```
+
+**Report includes:**
+- **Task**: ID, title, milestone association, dependencies status
+- **Execution**: Start/completion timestamps, duration, milestone progress  
+- **Quality**: Test results, coverage, lint status, build success
+- **Changes**: Files modified, scope compliance status
+- **Next**: Eligible tasks, blocked tasks, validation requirements
 
 ## Error Recovery
 
-```yaml
-ON_TEST_FAILURE:
-  analyze → root cause → fix implementation → re‑run tests (≤3 retries) → escalate
+**Structured error recovery with Gustav CLI:**
 
-ON_SCOPE_VIOLATION:
-  identify → revert out‑of‑scope → log → retry with stricter monitoring
+### Test Failures
+1. Analyze root cause of failing tests
+2. Fix implementation (not tests, unless tests are wrong)
+3. Re-run test suite (`npm test` or equivalent)
+4. Limit to ≤3 retry attempts, then escalate
 
-ON_QUALITY_FAILURE:
-  fix in order: failing tests → lint errors → coverage gaps → warnings; re‑run checks; document
-```
+### Scope Violations  
+1. Identify out-of-scope changes using `executor_cli check-scope-compliance`
+2. Revert unauthorized modifications
+3. Log violation and retry with stricter monitoring
+4. Update scope boundaries if legitimate expansion needed
+
+### Quality Gate Failures
+1. **Priority order**: Failing tests → lint errors → coverage gaps → warnings
+2. Re-run quality checks after each fix
+3. Document any quality exceptions with justification
 
 ## Orchestration Rules
 
@@ -285,23 +397,27 @@ go test ./... -cover | cat
 golangci-lint run | cat
 ```
 
-## Final Checklists
+## Final Checklist
 
-Before marking a task complete:
+**Before running `executor_cli complete-task`:**
 
-- [ ] Tests written and passing; coverage ≥ threshold
-- [ ] Zero lint/type errors; no critical/high vulns
-- [ ] Documentation updated; scope boundaries respected
-- [ ] Tech stack compliance verified
-- [ ] Quality gates passed; atomic commit done
-- [ ] Milestone progress updated; app still launches
+- [ ] ✅ All tests written and passing (100% success rate)
+- [ ] ✅ Test coverage meets or exceeds threshold  
+- [ ] ✅ Zero lint/type errors, no critical/high vulnerabilities
+- [ ] ✅ Documentation updated for new features
+- [ ] ✅ Scope boundaries respected (no unauthorized changes)
+- [ ] ✅ Tech stack compliance verified (approved technologies only)
+- [ ] ✅ All quality gates passed
+- [ ] ✅ Application still builds and launches successfully
+- [ ] ✅ Atomic commit made with task reference
 
-Before completing a milestone:
+**When all checklist items are complete:**
+1. Run `executor_cli complete-task "$TASK_ID"`  
+2. Check for milestone completion message
+3. If milestone complete → run `/gustav:validator [milestone-id]`
+4. If more tasks available → continue with next task
 
-- [ ] All milestone tasks complete; app runs w/o errors
-- [ ] Core features work; integration tests pass
-- [ ] Human review ready; rollback point created (git tag/branch)
-- [ ] Status report generated
+**⚠️ IMPORTANT: Task completion is handled automatically by Gustav CLI tools - no manual JSON editing should be attempted.**
 
 ## Milestone Validation Messaging
 
