@@ -52,17 +52,24 @@ class ExecutorCLI:
         except FileNotFoundError:
             return {}
 
-    def _save_json(self, filename: str, data: Dict):
-        """Save JSON file with atomic backup"""
-        updater = JsonUpdater(self.tasks_dir)
-        backup_dir = updater.create_backup()
-        try:
+    def _save_json(self, filename: str, data: Dict, create_backup: bool = False):
+        """Save JSON file with optional atomic backup"""
+        if create_backup:
+            # Use full backup protection for structural changes
+            updater = JsonUpdater(self.tasks_dir)
+            backup_dir = updater.create_backup()
+            try:
+                path = os.path.join(self.tasks_dir, filename)
+                with open(path, 'w') as f:
+                    json.dump(data, f, indent=2)
+            except Exception as e:
+                updater.restore_from_backup(backup_dir)
+                raise e
+        else:
+            # Simple write for routine status updates
             path = os.path.join(self.tasks_dir, filename)
             with open(path, 'w') as f:
                 json.dump(data, f, indent=2)
-        except Exception as e:
-            updater.restore_from_backup(backup_dir)
-            raise e
 
     def get_current_status(self) -> Dict:
         """Get current sprint execution status"""
