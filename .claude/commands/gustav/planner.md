@@ -374,6 +374,7 @@ Parallel research benefits: faster wall‑clock time, better coverage, reduced s
 - `/gustav:validator` — Validation
 - `/gustav:velocity` — Burndown chart
 - `/gustav:audit` — Security check
+- `/gustav:enhance` — Smart feature addition (post-planning)
 
 ## Session Management
 

@@ -23,6 +23,12 @@ Just run:
 /gustav:planner <PRD PATH>
 ```
 
+If you need help with any of the commands, you can always run:
+
+```
+/gustav:help
+```
+
 Gustav will do a lot of research so your application will be developed using the latest technologies in the best framework(s) for your particular goal. It will also decide which 7 features are going to be in the MVP version. Don't worry, Gustav will not remove any features. Any feature that doesn't make the cut for the MVP will be safely stored in the ./tasks/deferred.json file to be picked up later.
 
 ![milestone](images/start.png)
@@ -35,18 +41,32 @@ Gustav will do a lot of research so your application will be developed using the
 Once the planner has created all the necessary files, all you need to do is run:
 
 ```
-/gustav:executor
+/gustav:executor [task-id]
 ```
 
+You can either let Gustav pick the next task automatically, or specify a particular task ID if you want to work on something specific.
+
 Sit back and relax. Gustav will do all the heavy lifting. Your application will be built on solid best practices, like Test Driven Development (TDD), code quality tools and more. 
+
+## The Feature Enhancer
+
+Now here's where things get really interesting. Let's say you're halfway through development and suddenly think "Oh man, I totally forgot about that cool feature!" or "What if we added this awesome thing?" Don't worry, Gustav has you covered.
+
+```
+/gustav:enhance [feature-description]
+```
+
+Just describe what you want to add and Gustav will intelligently figure out where it fits in your existing sprint plan. It will research any new technologies needed, analyze dependencies, and insert the new tasks in the perfect spots without breaking your milestone flow. It's like having a smart project manager who can reshape the plan on the fly while keeping everything organized and on track.
 
 ## The QA person
 
 Now, most other frameworks are like a big black box. They keep developing hours on end and you really have no idea what is going on. Not Gustav. I have designed this framework with the human-in-the-loop as focal point. Gustav will not develop more than 3-4 tasks per milestone. Each milestone is a point in the development journey to start up the application and have a look. In fact, Gustav refuses to continue until you run the milestone validator:
 
 ```
-/gustav:validator
+/gustav:validator [milestone-id]
 ```
+
+You can validate the current milestone automatically, or specify a particular milestone ID if needed.
 
 ![milestone](images/milestone.png)
 
@@ -57,8 +77,10 @@ The validator will run tests, do code quality checks, checks endpoints of APIs, 
 Gustav also includes a burndown chart.
 
 ```
-/gustav:velocity
+/gustav:velocity [sprint-id]
 ```
+
+This will analyze the current sprint by default, or you can specify a particular sprint ID to review past performance.
 
 ![velocity](images/burndown.png)
 
@@ -68,8 +90,10 @@ Gustav also includes a burndown chart.
 And finally we have the security scanner:
 
 ```
-/gustav:audit
+/gustav:audit [scope: full|dependencies|code|config]
 ```
+
+You can run a full security audit, or focus on specific areas like dependencies, code analysis, or configuration review.
 
 This tool will check your application against a number of security compliance frameworks:
 
