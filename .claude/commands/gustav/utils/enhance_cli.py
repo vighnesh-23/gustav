@@ -216,8 +216,12 @@ def main():
     
     # Find tasks directory if not provided
     if not args.tasks_dir:
-        project_root = find_project_root()
-        args.tasks_dir = os.path.join(project_root, '.tasks')
+        try:
+            project_root = find_project_root()
+            args.tasks_dir = os.path.join(project_root, '.tasks')
+        except ValueError as e:
+            print(f"❌ {e}")
+            sys.exit(1)
     
     if args.action == 'create-backup':
         backup_path = create_backup(args.tasks_dir)

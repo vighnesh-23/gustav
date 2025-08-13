@@ -36,31 +36,54 @@ class FeatureAnalysis:
     conflicts: List[str]
     
 def find_project_root(start_dir: str = None) -> str:
-    """Find project root by looking for .git directory or Gustav-specific markers"""
+    """Find project root by looking for Gustav-specific markers, then .git directory
+    
+    Args:
+        start_dir: Directory to start search from. Defaults to current working directory.
+        
+    Returns:
+        Absolute path to project root directory.
+        
+    Raises:
+        ValueError: If no Gustav project markers are found.
+    """
     if start_dir is None:
         start_dir = os.getcwd()
     
     current = os.path.abspath(start_dir)
+    original_start = current
     
     while current != os.path.dirname(current):  # Not at filesystem root
-        # Look for .git directory
-        if os.path.exists(os.path.join(current, '.git')):
-            return current
-        
-        # Look for Gustav-specific markers
+        # Priority 1: Look for Gustav-specific markers (.tasks with required files)
         tasks_dir = os.path.join(current, '.tasks')
-        if os.path.exists(tasks_dir) and os.path.exists(os.path.join(tasks_dir, 'task_graph.json')):
+        if (os.path.exists(tasks_dir) and 
+            os.path.exists(os.path.join(tasks_dir, 'task_graph.json'))):
             return current
         
-        # Look for .claude directory with gustav commands
+        # Priority 2: Look for .git directory (likely a project root)
+        if os.path.exists(os.path.join(current, '.git')):
+            # Check if this git project also has Gustav files
+            tasks_dir = os.path.join(current, '.tasks')
+            if os.path.exists(tasks_dir):
+                return current
+            # If no .tasks, continue searching - this might be a parent repo
+        
+        # Priority 3: Look for .claude directory with gustav commands (legacy)
         claude_dir = os.path.join(current, '.claude', 'commands', 'gustav')
         if os.path.exists(claude_dir):
-            return current
+            # Only return if this also looks like a project root
+            if (os.path.exists(os.path.join(current, '.git')) or 
+                os.path.exists(os.path.join(current, '.tasks'))):
+                return current
         
         current = os.path.dirname(current)
     
-    # Fallback to current directory if no project root found
-    return os.getcwd()
+    # No Gustav project found - provide helpful error
+    raise ValueError(
+        f"No Gustav project found starting from '{original_start}'. "
+        f"Looking for directory containing '.tasks/task_graph.json'. "
+        f"Make sure you're running from within a Gustav project directory."
+    )
 
 class DependencyAnalyzer:
     def __init__(self, tasks_dir: str = None):

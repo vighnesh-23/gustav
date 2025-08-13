@@ -20,9 +20,20 @@ from json_updater import JsonUpdater
 class ExecutorCLI:
     def __init__(self, tasks_dir: Optional[str] = None):
         if tasks_dir is None:
-            project_root = find_project_root()
-            tasks_dir = os.path.join(project_root, ".tasks")
+            try:
+                project_root = find_project_root()
+                tasks_dir = os.path.join(project_root, ".tasks")
+            except ValueError as e:
+                print(f"❌ {e}")
+                sys.exit(1)
         self.tasks_dir = tasks_dir
+        
+        # Verify tasks directory exists
+        if not os.path.exists(self.tasks_dir):
+            print(f"❌ Gustav tasks directory not found: {self.tasks_dir}")
+            print("   Make sure you're in a Gustav project with initialized .tasks directory")
+            sys.exit(1)
+            
         self._load_data()
 
     def _load_data(self):

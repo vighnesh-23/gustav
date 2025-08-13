@@ -41,8 +41,13 @@ class InsertionPlan:
 class TaskInserter:
     def __init__(self, tasks_dir: str = None):
         if tasks_dir is None:
-            project_root = find_project_root()
-            tasks_dir = os.path.join(project_root, ".tasks")
+            try:
+                project_root = find_project_root()
+                tasks_dir = os.path.join(project_root, ".tasks")
+            except ValueError as e:
+                print(f"❌ {e}")
+                import sys
+                sys.exit(1)
         self.tasks_dir = tasks_dir
         self.task_graph = self._load_json("task_graph.json")
         self.progress_tracker = self._load_json("progress_tracker.json")

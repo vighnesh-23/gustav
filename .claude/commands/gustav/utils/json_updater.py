@@ -28,8 +28,13 @@ class UpdateSummary:
 class JsonUpdater:
     def __init__(self, tasks_dir: Optional[str] = None):
         if tasks_dir is None:
-            project_root = find_project_root()
-            tasks_dir = os.path.join(project_root, ".tasks")
+            try:
+                project_root = find_project_root()
+                tasks_dir = os.path.join(project_root, ".tasks")
+            except ValueError as e:
+                print(f"❌ {e}")
+                import sys
+                sys.exit(1)
         self.tasks_dir = tasks_dir
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.backup_dir = f"{tasks_dir}/backup/{self.timestamp}"
