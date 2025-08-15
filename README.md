@@ -13,6 +13,16 @@ Gustav will pro-actively monitor progress and code quality, so you can focus on 
 
 **Disclaimer:** This project is in beta. If you encounter any issues, please let me know!
 
+## Installation
+
+1. Open a terminal
+2. Navigate to the folder you wish to use Gustav in
+3. Run the command below
+
+```bash
+TEMP_DIR=$(mktemp -d) && git clone git@github.com:dimitritholen/gustav.git "$TEMP_DIR" && mv "$TEMP_DIR/.claude" . && rm -rf "$TEMP_DIR"
+```
+
 ## The Sprint Planner
 
 To start out you need a Product Requirements Document (PRD) detailing your application idea. You can place the document anywhere you like, as long as it is in the same project folder or one of its sub-folders.
