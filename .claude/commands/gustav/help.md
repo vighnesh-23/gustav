@@ -1,4 +1,8 @@
-# Usage: /gustav:help
+---
+allowed-tools:
+  - Read
+description: "Usage: /gustav:help - Display Gustav framework overview and commands"
+---
 
 **OUTPUT THE FOLLOWING EXACTLY AS IS - DO NOT ADD YOUR OWN TEXT**:
 

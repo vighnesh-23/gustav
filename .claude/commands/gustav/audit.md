@@ -1,4 +1,18 @@
-# Usage: /gustav:audit [scope: full|dependencies|code|config]
+---
+allowed-tools:
+  - Bash,
+  - Read,
+  - Edit,
+  - Write,
+  - WebFetch,
+  - Grep,
+  - Glob,
+  - LS,
+  - MultiEdit,
+  - Task,
+  - WebSearch
+description: "Usage: /gustav:audit [scope: full|dependencies|code|config] - Security analysis and vulnerability assessment"
+---
 
 Perform comprehensive security analysis and vulnerability assessment: $ARGUMENTS
 

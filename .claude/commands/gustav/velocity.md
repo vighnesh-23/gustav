@@ -1,4 +1,12 @@
-# Usage: /gustav:velocity [sprint-id optional]
+---
+allowed-tools:
+  - Bash
+  - Read
+  - Write
+  - Grep
+  - Glob
+description: "Usage: /gustav:velocity [sprint-id optional] - Analyze team velocity and performance metrics"
+---
 
 Analyze team velocity, performance metrics, and sprint predictability: $ARGUMENTS
 

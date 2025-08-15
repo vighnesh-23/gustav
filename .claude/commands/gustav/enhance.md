@@ -1,4 +1,13 @@
-# Usage: /gustav:enhance [feature-description]
+---
+allowed-tools:
+  - Bash
+  - Read
+  - Edit
+  - Write
+  - Grep
+  - Glob
+description: "Usage: /gustav:enhance [feature-description] - Add new feature to existing sprint plan"
+---
 
 Intelligently add a new feature to an existing Gustav sprint plan: $ARGUMENTS
 

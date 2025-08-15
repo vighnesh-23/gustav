@@ -1,4 +1,12 @@
-# Usage: /gustav:validate [milestone-id]
+---
+allowed-tools:
+  - Bash
+  - Read
+  - Edit
+  - Grep
+  - Glob
+description: "Usage: /gustav:validate [milestone-id] - Validate milestone completion and application state"
+---
 
 Validate that a milestone has been successfully completed and the application is ready for human review.
 

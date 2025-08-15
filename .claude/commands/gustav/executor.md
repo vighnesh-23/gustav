@@ -1,4 +1,15 @@
-# Usage: /gustav:executor [task-id optional]
+---
+allowed-tools:
+  - Bash
+  - Read
+  - Edit
+  - Write
+  - Grep
+  - Glob
+  - LS
+  - MultiEdit
+description: "Usage: /gustav:executor [task-id optional] - Execute sprint tasks with TDD methodology"
+---
 
 Execute the next sprint task or the specified task: $ARGUMENTS
 

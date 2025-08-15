@@ -1,4 +1,16 @@
-# Usage: /gustav:planner [PRD file or requirements]
+---
+allowed-tools:
+  - Bash
+  - Read
+  - Write
+  - WebFetch
+  - Grep
+  - Glob
+  - LS
+  - WebSearch
+  - Task
+description: "Usage: /gustav:planner [PRD file or requirements] - Plan and architect sprint from PRD"
+---
 
 **WHEN STARTED OUTPUT THE FOLLOWING CODE BLOCK EXACTLY AS IS - NO CUSTOM TEXT FROM YOU**
 
