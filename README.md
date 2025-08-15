@@ -20,7 +20,7 @@ Gustav will pro-actively monitor progress and code quality, so you can focus on 
 3. Run the command below
 
 ```bash
-TEMP_DIR=$(mktemp -d) && git clone git@github.com:dimitritholen/gustav.git "$TEMP_DIR" && cp -r "$TEMP_DIR/.claude"/* ./.claude/ && rm -rf "$TEMP_DIR"
+TEMP_DIR=$(mktemp -d) && git clone git@github.com:dimitritholen/gustav.git "$TEMP_DIR" && mkdir -p ./.claude && cp -r "$TEMP_DIR/.claude"/* ./.claude/ && rm -rf "$TEMP_DIR"
 ```
 
 ## The Sprint Planner
