@@ -325,10 +325,10 @@ ANALYSIS_EFFICIENCY:
 
 ```bash
 # Fast data collection and analysis (2-3 seconds)
-python3 .claude/commands/gustav/velocity_cli.py --json --quiet > /tmp/velocity_analysis.json
+python3 .claude/commands/gustav/utils/velocity_cli.py --json --quiet > /tmp/velocity_analysis.json
 
 # Extract specific metrics
-METRICS=$(python3 .claude/commands/gustav/velocity_cli.py --json --quiet)
+METRICS=$(python3 .claude/commands/gustav/utils/velocity_cli.py --json --quiet)
 SPRINT_ID=$(echo "$METRICS" | jq -r '.metrics.sprint_id')
 VELOCITY=$(echo "$METRICS" | jq -r '.metrics.velocity_tasks_per_day')
 COMPLETION=$(echo "$METRICS" | jq -r '.metrics.task_completion_rate')
@@ -707,19 +707,19 @@ EXPORT_OPTIONS:
 
 ```bash
 # Quick analysis report
-python3 .claude/commands/gustav/velocity_cli.py
+python3 .claude/commands/gustav/utils/velocity_cli.py
 
 # JSON output for scripting
-python3 .claude/commands/gustav/velocity_cli.py --json
+python3 .claude/commands/gustav/utils/velocity_cli.py --json
 
 # Quiet mode (no progress messages)
-python3 .claude/commands/gustav/velocity_cli.py --quiet
+python3 .claude/commands/gustav/utils/velocity_cli.py --quiet
 
 # Specific sprint analysis
-python3 .claude/commands/gustav/velocity_cli.py SPRINT-002
+python3 .claude/commands/gustav/utils/velocity_cli.py SPRINT-002
 
 # Custom tasks directory
-python3 .claude/commands/gustav/velocity_cli.py --tasks-dir /path/to/.tasks
+python3 .claude/commands/gustav/utils/velocity_cli.py --tasks-dir /path/to/.tasks
 ```
 
 ### Gustav Command Usage
